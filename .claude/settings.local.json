@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//private/tmp/propflow-scaffold/**)",
+      "Bash(rm -rf /tmp/propflow-scaffold/.git)"
+    ]
+  }
+}

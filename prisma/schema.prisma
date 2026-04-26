@@ -1,0 +1,264 @@
+// PropFlow — Prisma schema
+// Generator + datasource pointed at Supabase Postgres.
+// Run: npm run db:push   to sync schema in dev.
+// Run: npm run db:studio to browse data.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Identity & access
+// ────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  name         String?
+  avatarUrl    String?
+  role         UserRole  @default(OWNER)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  properties   Property[]
+  tenants      Tenant[]
+  payments     Payment[]
+  rules        TransactionRule[]
+  settings     UserSettings?
+  receipts     Receipt[]
+}
+
+enum UserRole {
+  OWNER
+  MANAGER
+  CONTRACTOR
+  TENANT
+}
+
+model UserSettings {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @unique @db.Uuid
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  themeName       String   @default("midnight-pro")
+  ntfyTopic       String?
+  ntfyToken       String?  // Encrypted
+  openaiApiKey    String?  // Encrypted
+  anthropicApiKey String?  // Encrypted
+  preferredAi     AiProvider @default(ANTHROPIC)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+enum AiProvider {
+  OPENAI
+  ANTHROPIC
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Properties & units
+// ────────────────────────────────────────────────────────────────────────────
+
+model Property {
+  id            String    @id @default(uuid()) @db.Uuid
+  ownerId       String    @db.Uuid
+  owner         User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name          String
+  addressLine1  String
+  addressLine2  String?
+  city          String
+  state         String
+  postalCode    String
+  country       String    @default("US")
+  propertyType  PropertyType @default(RESIDENTIAL_LTR)
+  purchasePrice Decimal?  @db.Decimal(12, 2)
+  purchaseDate  DateTime?
+  landValue     Decimal?  @db.Decimal(12, 2)
+  notes         String?
+  archivedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  units         Unit[]
+  payments      Payment[]
+  rules         TransactionRule[]
+
+  @@index([ownerId])
+}
+
+enum PropertyType {
+  RESIDENTIAL_LTR
+  RESIDENTIAL_STR
+  COMMERCIAL
+  MIXED_USE
+}
+
+model Unit {
+  id           String    @id @default(uuid()) @db.Uuid
+  propertyId   String    @db.Uuid
+  property     Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  label        String    // "Unit 1", "Apt 2A", etc.
+  bedrooms     Int?
+  bathrooms    Decimal?  @db.Decimal(3, 1)
+  squareFeet   Int?
+  monthlyRent  Decimal?  @db.Decimal(10, 2)
+  occupied     Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  tenants      Tenant[]
+  payments     Payment[]
+
+  @@index([propertyId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Tenants
+// ────────────────────────────────────────────────────────────────────────────
+
+model Tenant {
+  id           String    @id @default(uuid()) @db.Uuid
+  ownerId      String    @db.Uuid
+  owner        User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  unitId       String?   @db.Uuid
+  unit         Unit?     @relation(fields: [unitId], references: [id])
+  firstName    String
+  lastName     String
+  email        String?
+  phone        String?
+  leaseStart   DateTime?
+  leaseEnd     DateTime?
+  monthlyRent  Decimal?  @db.Decimal(10, 2)
+  depositHeld  Decimal?  @db.Decimal(10, 2)
+  notes        String?
+  archivedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  payments     Payment[]
+  receipts     Receipt[]
+
+  @@index([ownerId])
+  @@index([unitId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Payments — income AND expenses (income = positive, expense = negative)
+// ────────────────────────────────────────────────────────────────────────────
+
+model Payment {
+  id              String   @id @default(uuid()) @db.Uuid
+  ownerId         String   @db.Uuid
+  owner           User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  propertyId      String?  @db.Uuid
+  property        Property? @relation(fields: [propertyId], references: [id])
+  unitId          String?  @db.Uuid
+  unit            Unit?    @relation(fields: [unitId], references: [id])
+  tenantId        String?  @db.Uuid
+  tenant          Tenant?  @relation(fields: [tenantId], references: [id])
+  amount          Decimal  @db.Decimal(10, 2)        // positive=income, negative=expense
+  paidOn          DateTime
+  method          PaymentMethod @default(CASH)
+  scheduleELine   Int?                              // 3, 5-19
+  taxBadge        TaxBadge   @default(UNCATEGORIZED)
+  category        String?                           // free-text or auto from rules
+  payee           String?                           // for expenses ("Joseph Neff")
+  payer           String?                           // for income (tenant name)
+  memo            String?
+  isPartial       Boolean  @default(false)
+  consolidatedId  String?  @db.Uuid                 // groups partials into one logical payment
+  ruleAppliedId   String?  @db.Uuid                 // which TransactionRule matched
+  receiptId       String?  @db.Uuid                 // generated cash receipt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([paidOn])
+}
+
+enum PaymentMethod {
+  CASH
+  CHECK
+  ACH
+  CARD
+  ZELLE
+  VENMO
+  OTHER
+}
+
+enum TaxBadge {
+  DEDUCTIBLE       // Sch. E expense
+  INCOME           // Sch. E income
+  NON_DEDUCTIBLE   // mortgage principal, personal
+  REVIEW           // CPA review needed
+  UNCATEGORIZED
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Receipts (cash-receipt generator)
+// ────────────────────────────────────────────────────────────────────────────
+
+model Receipt {
+  id          String   @id @default(uuid()) @db.Uuid
+  ownerId     String   @db.Uuid
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  tenantId    String?  @db.Uuid
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id])
+  number      String   @unique                   // "PF-2026-000123"
+  amount      Decimal  @db.Decimal(10, 2)
+  paidOn      DateTime
+  method      PaymentMethod
+  notes       String?
+  pdfPath     String?                            // Supabase storage object key
+  createdAt   DateTime @default(now())
+
+  @@index([ownerId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Transaction rules (Joseph Neff style: "if payee=Joseph Neff -> Mgmt fee Line 11")
+// ────────────────────────────────────────────────────────────────────────────
+
+model TransactionRule {
+  id              String   @id @default(uuid()) @db.Uuid
+  ownerId         String   @db.Uuid
+  owner           User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  propertyId      String?  @db.Uuid
+  property        Property? @relation(fields: [propertyId], references: [id])
+  name            String
+  matchField      RuleField
+  matchOperator   RuleOperator
+  matchValue      String
+  setCategory     String?
+  setScheduleELine Int?
+  setTaxBadge     TaxBadge?
+  priority        Int      @default(100)         // lower runs first
+  enabled         Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([ownerId])
+}
+
+enum RuleField {
+  PAYEE
+  PAYER
+  MEMO
+  AMOUNT
+  METHOD
+}
+
+enum RuleOperator {
+  EQUALS
+  CONTAINS
+  STARTS_WITH
+  GREATER_THAN
+  LESS_THAN
+}

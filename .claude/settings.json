@@ -1,0 +1,81 @@
+{
+  "env": {
+    "NTFY_TOPIC": "propflow-REPLACE-WITH-YOUR-RANDOM-STRING",
+    "NTFY_TOKEN": "REPLACE-WITH-YOUR-NTFY-ACCESS-TOKEN"
+  },
+  "autoCompact": true,
+  "autoCompactThreshold": 0.85,
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'echo \"=== SESSION START ===\"; [ -f SESSION.md ] && cat SESSION.md || echo \"No SESSION.md yet\"; echo \"\"; tail -35 TESTING.md 2>/dev/null || echo \"No TESTING.md yet\"; echo \"=== END SESSION START ===\"'"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/log-prompt.js"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/pre-compact.sh"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/post-compact.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "LAST_RESPONSE=$(grep -A1 'Response:' PROMPTS.md 2>/dev/null | grep -v 'Response:' | tail -1 | sed 's/^[[:space:]]*//' | cut -c1-100); bash scripts/notify.sh 'PropFlow — Done' \"${LAST_RESPONSE:-Claude finished a task}\" 3 'white_check_mark'"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/notify.sh 'PropFlow — Input Needed' 'Claude Code paused and needs your input. Connect via Tailscale or check terminal.' 4 'question'"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "mkdir -p .claude && echo \"Session ended: $(date -u +%Y-%m-%dT%H:%M:%SZ)\" >> .claude/sessions.log"
+          }
+        ]
+      }
+    ]
+  }
+}

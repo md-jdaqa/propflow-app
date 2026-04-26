@@ -1,0 +1,25 @@
+{
+  "_comment": "Add these scripts to your package.json scripts section after running create-next-app.",
+  "scripts": {
+    "dev":              "next dev",
+    "build":            "next build",
+    "start":            "next start",
+    "lint":             "next lint",
+
+    "test":             "playwright test --reporter=json,html",
+    "posttest":         "node scripts/log-results.js",
+
+    "test:smoke":       "PROPFLOW_PHASE=smoke playwright test --grep '@smoke' --reporter=json",
+    "test:regression":  "PROPFLOW_PHASE=regression playwright test --reporter=json,html",
+    "test:desktop":     "PROPFLOW_PHASE=${PHASE} playwright test --project='Desktop Chrome'",
+    "test:mobile":      "PROPFLOW_PHASE=${PHASE} playwright test --project='Mobile iPhone 14'",
+    "test:status":      "tail -40 TESTING.md",
+
+    "version:patch":    "bash scripts/version-bump.sh patch",
+    "version:minor":    "bash scripts/version-bump.sh minor",
+    "version:major":    "bash scripts/version-bump.sh major",
+
+    "notify":           "bash scripts/notify.sh",
+    "linear":           "node scripts/linear-sync.js"
+  }
+}
