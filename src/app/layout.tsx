@@ -12,7 +12,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#0D1B2A",
+  maximumScale: 1,      // Prevents iOS auto-zoom on input focus
+  userScalable: false,  // Locks viewport — no pinch-zoom breaking layout
+  themeColor: "#080C14",
   viewportFit: "cover",
 };
 

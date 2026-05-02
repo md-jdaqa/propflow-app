@@ -11,6 +11,8 @@ export interface ReceiptInput {
   notes?: string | null;
   propertyName?: string | null;
   unitLabel?: string | null;
+  /** Base64 data URL of the payment proof screenshot (e.g. Zelle/Venmo confirmation). */
+  proofImageDataUrl?: string | null;
 }
 
 const ONES = [
@@ -96,6 +98,13 @@ export function renderReceiptHtml(input: ReceiptInput): string {
   const moneyStr = formatMoney(input.amount);
   const wordsStr = amountInWords(input.amount);
 
+  const proofSection = input.proofImageDataUrl
+    ? `<section style="margin-bottom:24px;">
+      <p style="margin:0 0 8px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Payment Proof</p>
+      <img src="${input.proofImageDataUrl}" alt="Payment proof screenshot" style="max-width:100%;border-radius:8px;border:1px solid #e2e8f0;display:block;" />
+    </section>`
+    : "";
+
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -145,6 +154,7 @@ export function renderReceiptHtml(input: ReceiptInput): string {
       <p style="margin:0;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Notes</p>
       <p style="margin:4px 0 0;font-size:14px;white-space:pre-wrap;">${safe.notes}</p>
     </section>` : ""}
+    ${proofSection}
 
     <section style="margin-top:48px;display:grid;grid-template-columns:1fr 1fr;gap:32px;">
       <div>

@@ -45,6 +45,13 @@ next-env.d.ts
 .claude/sessions.log
 .claude/prompt-counter.txt
 .claude/transcripts/
+.claude/worktrees/
+.claude/dev-server-logs/
+.claire/
+
+# screenshots / qa artifacts
+qa-screenshots/
+ss_*.png
 
 # prisma
 /prisma/migrations/dev.db*

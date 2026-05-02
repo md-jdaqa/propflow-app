@@ -49,6 +49,13 @@ const PaymentCreateSchema = z.object({
   taxBadge: TaxBadgeEnum.optional().nullable(),
   generateReceipt: z.boolean().default(false),
   isPartial: z.boolean().default(false),
+  /** Optional payment proof image as a data URL (e.g. "data:image/jpeg;base64,..."). Max 2 MB. */
+  proofImageDataUrl: z
+    .string()
+    .max(2_800_000) // ~2 MB base64
+    .regex(/^data:image\//, "Must be an image data URL")
+    .optional()
+    .nullable(),
 });
 
 const ListQuerySchema = z.object({
@@ -240,6 +247,7 @@ export async function POST(req: NextRequest) {
         paidOn: data.paidOn,
         method: data.method,
         notes: data.memo ?? null,
+        proofImageDataUrl: data.proofImageDataUrl ?? null,
       });
 
       try {

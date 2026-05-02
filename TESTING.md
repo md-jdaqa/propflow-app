@@ -115,3 +115,36 @@ Tests Run:
 Failures: None
 
 Gate Decision: OPEN — Phase 1, 2, and 3 features all green on both viewports. Phase 0 scaffold complete (Next.js 14 + TS + Tailwind + Supabase + Prisma + Stripe + Playwright + Inngest + Resend + Twilio installed; scripts wired; Prisma client generated). Phase 2 UI shipped (10 themes, OS auto-detect, top/bottom/sidebar nav, 7-card dashboard, Record Payment modal, Add Property slide-over, Finances 4 tabs, Settings AI + ntfy). Phase 3 features shipped (Auth providers wired, Tenant + Property/Unit CRUD with API routes, Cash receipt generator with auto-numbering, Partial-payment consolidation, Schedule E auto-categorizer + tax badges, Transaction Rules engine with Joseph Neff case, one-click Tax Package ZIP).
+
+---
+### RUN: 2026-04-26T21:40:09.883Z
+Phase: ? | Feature: UI overhaul smoke
+Results: 0 passed / 0 failed / 0 skipped
+
+Tests Run:
+
+ERROR: test-results/results.json not found — Playwright may not have run.
+
+Gate Decision: CLOSED — 0 failing. Fix before proceeding.
+
+---
+### RUN: 2026-04-26T21:40:32.194Z
+Phase: ? | Feature: Phase 1 smoke (20 tests)
+Results: 0 passed / 0 failed / 0 skipped
+
+Tests Run:
+
+ERROR: test-results/results.json not found — Playwright may not have run.
+
+Gate Decision: CLOSED — 0 failing. Fix before proceeding.
+
+---
+### RUN: 2026-04-26T21:40:50.756Z
+Phase: ? | Feature: Phase 1 smoke (20 tests)
+Results: 0 passed / 0 failed / 0 skipped
+
+Tests Run:
+
+ERROR: test-results/results.json not found — Playwright may not have run.
+
+Gate Decision: CLOSED — 0 failing. Fix before proceeding.

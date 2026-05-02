@@ -1,6 +1,10 @@
+"use client";
+import { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { TaxBadgeChip, type TaxBadgeKind } from "./TaxBadgeChip";
 import { RuleForm } from "./RuleForm";
+import { AiRuleCreator } from "./AiRuleCreator";
+import { ChevronDown, Wand2 } from "lucide-react";
 
 interface MockRule {
   id: string;
@@ -15,7 +19,15 @@ interface MockRule {
   enabled: boolean;
 }
 
-const MOCK_RULES: MockRule[] = [
+const FIELD_LABELS: Record<string, string> = {
+  PAYEE: "Payee", PAYER: "Payer", MEMO: "Memo", AMOUNT: "Amount", METHOD: "Method",
+};
+const OP_LABELS: Record<string, string> = {
+  EQUALS: "equals", CONTAINS: "contains", STARTS_WITH: "starts with",
+  GREATER_THAN: ">", LESS_THAN: "<",
+};
+
+const INITIAL_RULES: MockRule[] = [
   {
     id: "r1",
     name: "Joseph Neff → Mgmt fees",
@@ -55,67 +67,111 @@ const MOCK_RULES: MockRule[] = [
 ];
 
 export function RulesTab() {
+  const [rules] = useState<MockRule[]>(INITIAL_RULES);
+  const [showManual, setShowManual] = useState(false);
+
   return (
     <div data-testid="finances-rules" className="space-y-4">
+
+      {/* ── AI Rule Creator — always on top ── */}
+      <AiRuleCreator onSaved={() => { /* TODO: refresh rules list from API */ }} />
+
+      {/* ── Manual form (collapsed by default) ── */}
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{ border: "1px solid var(--border)", background: "var(--surface)" }}
+      >
+        <button
+          type="button"
+          onClick={() => setShowManual((s) => !s)}
+          className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+          aria-expanded={showManual}
+          data-testid="manual-rule-toggle"
+        >
+          <div className="flex items-center gap-2.5">
+            <Wand2 size={15} style={{ color: "var(--muted)" }} />
+            <span className="text-sm font-medium" style={{ color: "var(--body)" }}>
+              Build rule manually
+            </span>
+          </div>
+          <ChevronDown
+            size={15}
+            className="transition-transform duration-200"
+            style={{
+              color: "var(--muted)",
+              transform: showManual ? "rotate(180deg)" : "rotate(0deg)",
+            }}
+          />
+        </button>
+        {showManual && (
+          <div className="px-4 pb-4 border-t" style={{ borderColor: "var(--border)" }}>
+            <div className="pt-4">
+              <RuleForm onSaved={() => setShowManual(false)} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Existing rules list ── */}
       <Card testId="rules-list">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-heading">Existing rules</h3>
-          <span className="text-xs text-muted">
-            {MOCK_RULES.length} active
+          <h3 className="text-sm font-semibold" style={{ color: "var(--heading)" }}>
+            Active rules
+          </h3>
+          <span className="text-xs px-2 py-0.5 rounded-full"
+            style={{ background: "var(--surface-2)", color: "var(--muted)" }}>
+            {rules.filter((r) => r.enabled).length} of {rules.length}
           </span>
         </div>
 
-        <ul className="divide-y divide-border">
-          {MOCK_RULES.map((rule) => (
-            <li
-              key={rule.id}
-              data-testid={`rule-row-${rule.id}`}
-              className="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
-            >
-              <div className="min-w-0">
-                <div className="text-sm font-medium text-body truncate">
-                  {rule.name}
+        {rules.length === 0 ? (
+          <p className="text-sm text-center py-8" style={{ color: "var(--muted)" }}>
+            No rules yet. Create one above.
+          </p>
+        ) : (
+          <ul className="divide-y" style={{ borderColor: "var(--border-subtle, var(--border))" }}>
+            {rules.map((rule) => (
+              <li
+                key={rule.id}
+                data-testid={`rule-row-${rule.id}`}
+                className="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      style={{ background: rule.enabled ? "var(--success)" : "var(--muted)" }}
+                    />
+                    <p className="text-sm font-medium truncate" style={{ color: "var(--body)" }}>
+                      {rule.name}
+                    </p>
+                  </div>
+                  <p className="text-xs mt-0.5 pl-3.5" style={{ color: "var(--muted)" }}>
+                    if {FIELD_LABELS[rule.matchField] ?? rule.matchField}{" "}
+                    <span style={{ color: "var(--secondary)" }}>
+                      {OP_LABELS[rule.matchOperator] ?? rule.matchOperator}
+                    </span>{" "}
+                    <span style={{ color: "var(--body)" }}>"{rule.matchValue}"</span>
+                    {rule.setCategory && (
+                      <> → <span style={{ color: "var(--body)" }}>{rule.setCategory}</span></>
+                    )}
+                  </p>
                 </div>
-                <div className="text-xs text-muted">
-                  if <span className="text-body">{rule.matchField}</span>{" "}
-                  {rule.matchOperator.replace("_", " ").toLowerCase()}{" "}
-                  <span className="text-body">"{rule.matchValue}"</span>
-                  {rule.setCategory ? (
-                    <> → set <span className="text-body">{rule.setCategory}</span></>
+                <div className="flex items-center gap-2 flex-wrap pl-3.5 sm:pl-0">
+                  {rule.setTaxBadge ? (
+                    <TaxBadgeChip badge={rule.setTaxBadge} scheduleELine={rule.setScheduleELine} />
                   ) : null}
-                  {rule.setScheduleELine ? (
-                    <> · L{rule.setScheduleELine}</>
-                  ) : null}
+                  <span
+                    className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+                    style={{ background: "var(--surface-2)", color: "var(--muted)" }}
+                  >
+                    P{rule.priority}
+                  </span>
                 </div>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                {rule.setTaxBadge ? (
-                  <TaxBadgeChip
-                    badge={rule.setTaxBadge}
-                    scheduleELine={rule.setScheduleELine}
-                  />
-                ) : null}
-                <span className="pf-badge bg-muted/10 text-muted">
-                  P{rule.priority}
-                </span>
-                <span
-                  className={
-                    rule.enabled
-                      ? "pf-badge bg-success/10 text-success"
-                      : "pf-badge bg-muted/10 text-muted"
-                  }
-                >
-                  {rule.enabled ? "On" : "Off"}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </Card>
-
-      <Card testId="rules-create">
-        <h3 className="font-semibold text-heading mb-3">Create a new rule</h3>
-        <RuleForm />
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
     </div>
   );

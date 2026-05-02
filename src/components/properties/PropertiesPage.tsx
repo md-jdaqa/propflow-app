@@ -22,7 +22,7 @@ export function PropertiesPage({ data, initialAction, usingMock }: Props) {
     <div data-testid="properties-page" className="flex flex-col gap-4">
       <header className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold text-heading">Properties</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-heading" style={{ letterSpacing: "-0.02em" }}>Properties</h1>
           <p className="text-sm text-muted">
             {data.length} {data.length === 1 ? "property" : "properties"}
             {usingMock ? " (sample data)" : ""}
@@ -32,7 +32,7 @@ export function PropertiesPage({ data, initialAction, usingMock }: Props) {
           type="button"
           data-testid="add-property-button"
           onClick={() => setOpen(true)}
-          className="pf-btn pf-btn-primary min-h-11 px-4"
+          className="pf-btn pf-btn-primary px-4"
         >
           + Add property
         </button>

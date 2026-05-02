@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
-export const dynamic = "force-dynamic";
+// Static export: provide stub params; real data loads at runtime via mock fallback
+export async function generateStaticParams() {
+  return [{ id: "demo" }, { id: "sample" }];
+}
 
 const MOCK_OWNER_ID = "00000000-0000-0000-0000-000000000001";
 

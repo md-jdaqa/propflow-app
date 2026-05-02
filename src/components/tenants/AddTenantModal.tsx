@@ -142,7 +142,7 @@ export function AddTenantModal({ open, onClose, units }: Props) {
       title="Add tenant"
       testId="add-tenant-modal"
     >
-      <form onSubmit={onSubmit} className="flex flex-col gap-3">
+      <form onSubmit={onSubmit} className="flex flex-col gap-3" noValidate>
         <div className="grid grid-cols-2 gap-3">
           <label className="flex flex-col gap-1">
             <span className="text-sm text-body">First name</span>
