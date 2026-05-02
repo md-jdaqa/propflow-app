@@ -10,11 +10,11 @@ import {
 } from "lucide-react";
 
 const NAV_ITEMS = [
-  { href: "/home",        label: "Home",        icon: Home },
-  { href: "/lease",       label: "My Lease",    icon: FileText },
-  { href: "/payments",    label: "Payments",    icon: CreditCard },
-  { href: "/maintenance", label: "Maintenance", icon: Wrench },
-  { href: "/messages",    label: "Messages",    icon: MessageSquare },
+  { href: "/tenant/home",        label: "Home",        icon: Home },
+  { href: "/tenant/lease",       label: "My Lease",    icon: FileText },
+  { href: "/tenant/payments",    label: "Payments",    icon: CreditCard },
+  { href: "/tenant/maintenance", label: "Maintenance", icon: Wrench },
+  { href: "/tenant/messages",    label: "Messages",    icon: MessageSquare },
 ] as const;
 
 export default function TenantPortalLayout({

@@ -94,21 +94,21 @@ export function TenantDashboard() {
         </p>
         <div className="flex flex-wrap gap-2">
           <Link
-            href="/payments"
+            href="/tenant/payments"
             className="pf-btn pf-btn-primary text-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0"
           >
             <CreditCard size={15} />
             Pay Rent
           </Link>
           <Link
-            href="/maintenance"
+            href="/tenant/maintenance"
             className="pf-btn pf-btn-secondary text-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0"
           >
             <Wrench size={15} />
             Submit Maintenance
           </Link>
           <Link
-            href="/messages"
+            href="/tenant/messages"
             className="pf-btn pf-btn-secondary text-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0"
           >
             <MessageSquare size={15} />

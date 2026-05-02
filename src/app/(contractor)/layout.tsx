@@ -6,10 +6,10 @@ import { Wrench, Building2, Calendar, MessageSquare } from "lucide-react";
 const CONTRACTOR_NAME = "Marcus Rivera";
 
 const NAV_LINKS = [
-  { href: "/jobs",       label: "Jobs",       icon: <Wrench      size={20} /> },
-  { href: "/properties", label: "Properties", icon: <Building2   size={20} /> },
-  { href: "/schedule",   label: "Schedule",   icon: <Calendar    size={20} /> },
-  { href: "/messages",   label: "Messages",   icon: <MessageSquare size={20} /> },
+  { href: "/contractor/jobs",       label: "Jobs",       icon: <Wrench      size={20} /> },
+  { href: "/contractor/properties", label: "Properties", icon: <Building2   size={20} /> },
+  { href: "/contractor/schedule",   label: "Schedule",   icon: <Calendar    size={20} /> },
+  { href: "/contractor/messages",   label: "Messages",   icon: <MessageSquare size={20} /> },
 ];
 
 export default function ContractorLayout({ children }: { children: React.ReactNode }) {

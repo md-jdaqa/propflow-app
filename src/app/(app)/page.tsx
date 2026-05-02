@@ -7,6 +7,7 @@ import {
   UpcomingCard,
   TaxReadinessCard,
 } from "@/components/dashboard/DashboardCards";
+import Link from "next/link";
 import { Sparkles, LayoutDashboard, User, Wrench, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -102,13 +103,13 @@ export default function DashboardPage() {
           </div>
 
           {/* Tenant Portal */}
-          <a
+          <Link
             href="/tenant/home"
-            className="pf-card flex items-start gap-3 p-4 group cursor-pointer no-underline"
+            className="pf-card flex items-start gap-3 p-4 cursor-pointer no-underline block"
             style={{ textDecoration: "none" }}
           >
             <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors"
+              className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
               style={{ background: "rgba(34,197,94,0.12)", color: "var(--success)" }}
             >
               <User size={16} strokeWidth={2} />
@@ -129,19 +130,18 @@ export default function DashboardPage() {
                 Rent payments, maintenance requests &amp; documents
               </p>
               <div
-                className="flex items-center gap-1 mt-2 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+                className="flex items-center gap-1 mt-2 text-xs font-medium"
                 style={{ color: "var(--success)" }}
               >
-                Open portal
-                <ArrowRight size={12} strokeWidth={2.5} />
+                Open portal <ArrowRight size={12} strokeWidth={2.5} />
               </div>
             </div>
-          </a>
+          </Link>
 
           {/* Contractor Portal */}
-          <a
+          <Link
             href="/contractor/jobs"
-            className="pf-card flex items-start gap-3 p-4 group cursor-pointer no-underline"
+            className="pf-card flex items-start gap-3 p-4 cursor-pointer no-underline block"
             style={{ textDecoration: "none" }}
           >
             <div
@@ -166,14 +166,13 @@ export default function DashboardPage() {
                 Job assignments, work orders &amp; invoicing
               </p>
               <div
-                className="flex items-center gap-1 mt-2 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+                className="flex items-center gap-1 mt-2 text-xs font-medium"
                 style={{ color: "var(--warning)" }}
               >
-                Open portal
-                <ArrowRight size={12} strokeWidth={2.5} />
+                Open portal <ArrowRight size={12} strokeWidth={2.5} />
               </div>
             </div>
-          </a>
+          </Link>
         </div>
       </section>
 

@@ -35,7 +35,7 @@ function PropertyCard({ property }: { property: AssignedProperty }) {
 
   function handleViewJobs() {
     // Navigate to jobs page — in a real app this would pass a filter param
-    router.push("/jobs");
+    router.push("/contractor/jobs");
   }
 
   return (
