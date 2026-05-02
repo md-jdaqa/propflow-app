@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { CheckSquare, Plus, Sparkles, Circle, CheckCircle2, Clock, X } from "lucide-react";
+import { Plus, Sparkles, Circle, CheckCircle2, Clock, X } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 
 type Priority = "HIGH" | "MEDIUM" | "LOW";

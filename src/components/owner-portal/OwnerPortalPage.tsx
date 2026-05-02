@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Building2, DollarSign, FileText, Wrench, TrendingUp, Download, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { Building2, FileText, Download, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 
 interface OwnerStatement {

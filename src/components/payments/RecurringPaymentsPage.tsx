@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { RefreshCw, Plus, CreditCard, Calendar, CheckCircle2, AlertTriangle, Clock, Pause, Play } from "lucide-react";
+import { Plus, CreditCard, Calendar, CheckCircle2, AlertTriangle, Clock, Pause, Play } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 
 type PaymentFrequency = "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "QUARTERLY" | "ANNUALLY";

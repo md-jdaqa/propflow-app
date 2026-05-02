@@ -62,9 +62,11 @@ export async function middleware(request: NextRequest) {
       get(name: string) {
         return request.cookies.get(name)?.value;
       },
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       set(_name: string, _value: string, _options: CookieOptions) {
         // no-op — updateSession already wrote cookies onto `response`.
       },
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       remove(_name: string, _options: CookieOptions) {
         // no-op
       },

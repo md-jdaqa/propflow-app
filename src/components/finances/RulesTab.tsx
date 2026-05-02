@@ -151,7 +151,7 @@ export function RulesTab() {
                     <span style={{ color: "var(--secondary)" }}>
                       {OP_LABELS[rule.matchOperator] ?? rule.matchOperator}
                     </span>{" "}
-                    <span style={{ color: "var(--body)" }}>"{rule.matchValue}"</span>
+                    <span style={{ color: "var(--body)" }}>&quot;{rule.matchValue}&quot;</span>
                     {rule.setCategory && (
                       <> → <span style={{ color: "var(--body)" }}>{rule.setCategory}</span></>
                     )}
