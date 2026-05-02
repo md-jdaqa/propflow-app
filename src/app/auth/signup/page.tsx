@@ -1,24 +1,26 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Building2, Mail, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import {
+  Building2,
+  Eye,
+  EyeOff,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
-function SignInPageInner() {
-  const searchParams = useSearchParams();
-  const initialError = searchParams.get("error");
+export default function SignUpPage() {
   const supabase = createClient();
 
   const [email, setEmail] = useState("");
-  const [submitting, setSubmitting] = useState<null | "google" | "magic">(null);
-  const [error, setError] = useState<string | null>(
-    initialError === "auth_callback_error"
-      ? "Sign in failed. Please try again."
-      : null,
-  );
-  const [magicSent, setMagicSent] = useState(false);
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState<null | "google" | "email">(null);
+  const [error, setError] = useState<string | null>(null);
+  const [signupSent, setSignupSent] = useState(false);
 
   const handleGoogle = async () => {
     setError(null);
@@ -35,24 +37,29 @@ function SignInPageInner() {
     }
   };
 
-  const handleMagic = async (e: React.FormEvent) => {
+  const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("Enter a valid email address.");
       return;
     }
-    setSubmitting("magic");
-    const { error: otpError } = await supabase.auth.signInWithOtp({
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+    setSubmitting("email");
+    const { error: signupError } = await supabase.auth.signUp({
       email,
+      password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
-    if (otpError) {
-      setError(otpError.message);
+    if (signupError) {
+      setError(signupError.message);
     } else {
-      setMagicSent(true);
+      setSignupSent(true);
     }
     setSubmitting(null);
   };
@@ -95,13 +102,13 @@ function SignInPageInner() {
             className="text-lg font-semibold"
             style={{ color: "var(--heading, #FFFFFF)" }}
           >
-            Welcome back
+            Create your account
           </h1>
           <p
             className="text-sm mt-1"
             style={{ color: "var(--muted-text, #94A3B8)" }}
           >
-            Sign in to continue to your dashboard
+            Start managing your properties in minutes
           </p>
         </div>
 
@@ -122,8 +129,8 @@ function SignInPageInner() {
             </div>
           )}
 
-          {/* Magic link sent banner */}
-          {magicSent && (
+          {/* Success banner */}
+          {signupSent && (
             <div
               role="status"
               className="flex items-start gap-2 p-3 rounded-lg text-sm"
@@ -135,7 +142,8 @@ function SignInPageInner() {
             >
               <CheckCircle2 size={16} className="flex-shrink-0 mt-0.5" />
               <span>
-                Check your email — we sent a magic link to <strong>{email}</strong>.
+                Check your email — we sent a confirmation link to{" "}
+                <strong>{email}</strong>.
               </span>
             </div>
           )}
@@ -145,7 +153,7 @@ function SignInPageInner() {
             type="button"
             onClick={handleGoogle}
             disabled={submitting !== null}
-            data-testid="signin-google"
+            data-testid="signup-google"
             className="w-full flex items-center justify-center gap-3 rounded-xl font-semibold text-sm transition-all"
             style={{
               minHeight: "48px",
@@ -200,29 +208,29 @@ function SignInPageInner() {
             />
           </div>
 
-          {/* Magic link form */}
-          <form onSubmit={handleMagic} noValidate className="flex flex-col gap-3">
+          {/* Email + password */}
+          <form onSubmit={handleEmailSignup} noValidate className="flex flex-col gap-3">
             <div>
               <label
-                htmlFor="signin-email"
+                htmlFor="signup-email"
                 className="block text-sm font-medium mb-1.5"
                 style={{ color: "var(--body, #E2E8F0)" }}
               >
                 Email
               </label>
               <input
-                id="signin-email"
+                id="signup-email"
                 type="email"
                 autoComplete="email"
                 inputMode="email"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  if (magicSent) setMagicSent(false);
+                  if (signupSent) setSignupSent(false);
                   if (error) setError(null);
                 }}
                 placeholder="you@example.com"
-                data-testid="signin-email"
+                data-testid="signup-email"
                 disabled={submitting !== null}
                 style={{
                   width: "100%",
@@ -249,10 +257,76 @@ function SignInPageInner() {
                 }}
               />
             </div>
+
+            <div>
+              <label
+                htmlFor="signup-password"
+                className="block text-sm font-medium mb-1.5"
+                style={{ color: "var(--body, #E2E8F0)" }}
+              >
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  id="signup-password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  placeholder="At least 8 characters"
+                  data-testid="signup-password"
+                  disabled={submitting !== null}
+                  style={{
+                    width: "100%",
+                    minHeight: "48px",
+                    padding: "12px 44px 12px 14px",
+                    background: "var(--background, #0D1B2A)",
+                    color: "var(--body, #E2E8F0)",
+                    border: "1px solid var(--border, #1E3A5F)",
+                    borderRadius: "10px",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.15s, box-shadow 0.15s",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor =
+                      "var(--primary, #1A56DB)";
+                    e.currentTarget.style.boxShadow =
+                      "0 0 0 3px rgba(26,86,219,0.20)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor =
+                      "var(--border, #1E3A5F)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute top-1/2 -translate-y-1/2 flex items-center justify-center"
+                  style={{
+                    right: "8px",
+                    width: "36px",
+                    height: "36px",
+                    color: "var(--muted-text, #94A3B8)",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={submitting !== null}
-              data-testid="signin-magic"
+              data-testid="signup-submit"
               className="w-full flex items-center justify-center gap-2 rounded-xl font-semibold text-sm text-white transition-all"
               style={{
                 minHeight: "48px",
@@ -268,12 +342,12 @@ function SignInPageInner() {
                     : "0 4px 14px rgba(26,86,219,0.35)",
               }}
             >
-              {submitting === "magic" ? (
+              {submitting === "email" ? (
                 <Loader2 size={18} className="animate-spin" />
-              ) : (
-                <Mail size={16} />
-              )}
-              <span>{submitting === "magic" ? "Sending…" : "Send magic link"}</span>
+              ) : null}
+              <span>
+                {submitting === "email" ? "Creating account…" : "Create account"}
+              </span>
             </button>
           </form>
 
@@ -282,24 +356,16 @@ function SignInPageInner() {
             className="text-center text-sm mt-2"
             style={{ color: "var(--muted-text, #94A3B8)" }}
           >
-            Don&apos;t have an account?{" "}
+            Already have an account?{" "}
             <Link
-              href="/auth/signup"
+              href="/auth/signin"
               style={{ color: "var(--primary, #1A56DB)", fontWeight: 600 }}
             >
-              Sign up
+              Sign in
             </Link>
           </p>
         </div>
       </div>
     </div>
-  );
-}
-
-export default function SignInPage() {
-  return (
-    <Suspense fallback={null}>
-      <SignInPageInner />
-    </Suspense>
   );
 }

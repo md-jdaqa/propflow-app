@@ -1,34 +1,39 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-export async function GET(req: NextRequest) {
-  const url = new URL(req.url);
-  const code = url.searchParams.get("code");
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get('code');
+  const next = searchParams.get('next') ?? '/';
 
-  if (!code) {
-    return NextResponse.redirect(new URL("/sign-in?error=missing_code", req.url), {
-      status: 303,
-    });
-  }
-
-  try {
-    const supabase = createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (error) {
-      return NextResponse.redirect(
-        new URL(`/sign-in?error=${encodeURIComponent(error.message)}`, req.url),
-        { status: 303 },
-      );
-    }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "exchange_failed";
-    return NextResponse.redirect(
-      new URL(`/sign-in?error=${encodeURIComponent(msg)}`, req.url),
-      { status: 303 },
+  if (code) {
+    const cookieStore = cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+      {
+        cookies: {
+          get: (n: string) => cookieStore.get(n)?.value,
+          set: (n: string, v: string, o: CookieOptions) => {
+            try {
+              cookieStore.set({ name: n, value: v, ...o });
+            } catch {}
+          },
+          remove: (n: string, o: CookieOptions) => {
+            try {
+              cookieStore.delete({ name: n, ...o });
+            } catch {}
+          },
+        },
+      },
     );
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      return NextResponse.redirect(`${origin}${next}`);
+    }
   }
-
-  return NextResponse.redirect(new URL("/", req.url), { status: 303 });
+  return NextResponse.redirect(`${origin}/auth/signin?error=auth_callback_error`);
 }

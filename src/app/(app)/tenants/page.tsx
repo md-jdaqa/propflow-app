@@ -1,9 +1,8 @@
-import { prisma } from "@/lib/prisma";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import { TenantsPage } from "@/components/tenants/TenantsPage";
 
 export const dynamic = "force-dynamic";
-
-const MOCK_OWNER_ID = "00000000-0000-0000-0000-000000000001";
 
 export type TenantUnitOption = {
   id: string;
@@ -24,149 +23,29 @@ export type TenantListItem = {
   monthlyRent: number | null;
 };
 
-const MOCK_TENANTS: TenantListItem[] = [
-  {
-    id: "mock-t-1",
-    firstName: "Alex",
-    lastName: "Johnson",
-    email: "alex@example.com",
-    phone: "555-0101",
-    unitLabel: "Unit 1",
-    propertyName: "Brooklyn Brownstone",
-    leaseStart: "2025-01-01",
-    leaseEnd: "2026-12-31",
-    monthlyRent: 2400,
-  },
-  {
-    id: "mock-t-2",
-    firstName: "Bri",
-    lastName: "Lee",
-    email: "bri@example.com",
-    phone: "555-0102",
-    unitLabel: "Unit 2",
-    propertyName: "Brooklyn Brownstone",
-    leaseStart: "2024-09-01",
-    leaseEnd: "2025-08-31",
-    monthlyRent: 1800,
-  },
-  {
-    id: "mock-t-3",
-    firstName: "Chris",
-    lastName: "Davis",
-    email: null,
-    phone: "555-0103",
-    unitLabel: "Apt B",
-    propertyName: "Park Slope Duplex",
-    leaseStart: "2025-03-15",
-    leaseEnd: "2026-03-14",
-    monthlyRent: 3100,
-  },
-  {
-    id: "mock-t-4",
-    firstName: "Dana",
-    lastName: "Patel",
-    email: "dana@example.com",
-    phone: null,
-    unitLabel: "Apt A",
-    propertyName: "Park Slope Duplex",
-    leaseStart: "2025-06-01",
-    leaseEnd: "2026-05-31",
-    monthlyRent: 2900,
-  },
-  {
-    id: "mock-t-5",
-    firstName: "Evan",
-    lastName: "Quinn",
-    email: "evan@example.com",
-    phone: "555-0105",
-    unitLabel: "Beach 1",
-    propertyName: "Beachside STR",
-    leaseStart: "2026-04-01",
-    leaseEnd: "2026-04-30",
-    monthlyRent: 4500,
-  },
-];
-
-const MOCK_UNITS: TenantUnitOption[] = [
-  { id: "mock-u-1", label: "Unit 1", propertyName: "Brooklyn Brownstone" },
-  { id: "mock-u-2", label: "Unit 2", propertyName: "Brooklyn Brownstone" },
-  { id: "mock-u-3", label: "Apt A", propertyName: "Park Slope Duplex" },
-  { id: "mock-u-4", label: "Apt B", propertyName: "Park Slope Duplex" },
-  { id: "mock-u-5", label: "Beach 1", propertyName: "Beachside STR" },
-];
-
-async function loadData(): Promise<{
-  tenants: TenantListItem[];
-  units: TenantUnitOption[];
-  usingMock: boolean;
-}> {
-  if (!process.env.DATABASE_URL) {
-    return { tenants: MOCK_TENANTS, units: MOCK_UNITS, usingMock: true };
-  }
-  try {
-    type TenantRow = {
-      id: string;
-      firstName: string;
-      lastName: string;
-      email: string | null;
-      phone: string | null;
-      leaseStart: Date | null;
-      leaseEnd: Date | null;
-      monthlyRent: { toString(): string } | number | null;
-      unit: {
+type TenantRow = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  leaseStart: string | null;
+  leaseEnd: string | null;
+  monthlyRent: number | string | null;
+  unit:
+    | {
+        id: string;
         label: string;
-        property: { name: string } | null;
-      } | null;
-    };
-    type UnitRow = {
-      id: string;
-      label: string;
-      property: { name: string };
-    };
-    const [tenantsRaw, unitsRaw] = await Promise.all([
-      prisma.tenant.findMany({
-        where: { ownerId: MOCK_OWNER_ID, archivedAt: null },
-        include: { unit: { include: { property: true } } },
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.unit.findMany({
-        where: {
-          property: { ownerId: MOCK_OWNER_ID, archivedAt: null },
-        },
-        include: { property: true },
-        orderBy: { label: "asc" },
-      }),
-    ]);
-    const tenants = tenantsRaw as TenantRow[];
-    const units = unitsRaw as UnitRow[];
+        property: { id: string; name: string } | null;
+      }
+    | null;
+};
 
-    return {
-      tenants: tenants.map((t) => ({
-        id: t.id,
-        firstName: t.firstName,
-        lastName: t.lastName,
-        email: t.email,
-        phone: t.phone,
-        unitLabel: t.unit?.label ?? null,
-        propertyName: t.unit?.property?.name ?? null,
-        leaseStart: t.leaseStart ? t.leaseStart.toISOString() : null,
-        leaseEnd: t.leaseEnd ? t.leaseEnd.toISOString() : null,
-        monthlyRent:
-          t.monthlyRent === null || t.monthlyRent === undefined
-            ? null
-            : Number(t.monthlyRent),
-      })),
-      units: units.map((u) => ({
-        id: u.id,
-        label: u.label,
-        propertyName: u.property.name,
-      })),
-      usingMock: false,
-    };
-  } catch {
-    return { tenants: MOCK_TENANTS, units: MOCK_UNITS, usingMock: true };
-  }
-}
+type UnitRow = {
+  id: string;
+  label: string;
+  property: { id: string; name: string; ownerId: string } | null;
+};
 
 export default async function TenantsRoute({
   searchParams,
@@ -174,13 +53,64 @@ export default async function TenantsRoute({
   searchParams?: { action?: string };
 }) {
   const initialAction = searchParams?.action ?? null;
-  const { tenants, units, usingMock } = await loadData();
+
+  const supabase = createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/signin");
+
+  const [tenantsRes, unitsRes] = await Promise.all([
+    supabase
+      .from("Tenant")
+      .select(
+        "id, firstName, lastName, email, phone, leaseStart, leaseEnd, monthlyRent, unit:Unit(id, label, property:Property(id, name))",
+      )
+      .eq("ownerId", user.id)
+      .is("archivedAt", null)
+      .order("lastName"),
+    supabase
+      .from("Unit")
+      .select("id, label, property:Property!inner(id, name, ownerId)")
+      .eq("property.ownerId", user.id)
+      .is("property.archivedAt", null)
+      .order("label"),
+  ]);
+
+  if (tenantsRes.error) console.error("Tenants fetch error:", tenantsRes.error);
+  if (unitsRes.error) console.error("Units fetch error:", unitsRes.error);
+
+  const tenants = (tenantsRes.data ?? []) as unknown as TenantRow[];
+  const units = (unitsRes.data ?? []) as unknown as UnitRow[];
+
+  const mappedTenants: TenantListItem[] = tenants.map((t) => ({
+    id: t.id,
+    firstName: t.firstName,
+    lastName: t.lastName,
+    email: t.email ?? null,
+    phone: t.phone ?? null,
+    unitLabel: t.unit?.label ?? null,
+    propertyName: t.unit?.property?.name ?? null,
+    leaseStart: t.leaseStart ?? null,
+    leaseEnd: t.leaseEnd ?? null,
+    monthlyRent:
+      t.monthlyRent === null || t.monthlyRent === undefined
+        ? null
+        : Number(t.monthlyRent),
+  }));
+
+  const mappedUnits: TenantUnitOption[] = units.map((u) => ({
+    id: u.id,
+    label: u.label,
+    propertyName: u.property?.name ?? "",
+  }));
+
   return (
     <TenantsPage
-      data={tenants}
-      units={units}
+      data={mappedTenants}
+      units={mappedUnits}
       initialAction={initialAction}
-      usingMock={usingMock}
+      usingMock={false}
     />
   );
 }
